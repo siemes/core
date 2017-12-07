@@ -10,7 +10,7 @@ const utils = require('./base/utils');
 const route = require('./base/route');
 
 module.exports = function Cms(app) {
-  if (!app.hasServices('Mongoose|Plugin|System|S3|Admin')) {
+  if (!app.hasServices('Mongoose|Plugin|System|S3')) {
     return false;
   }
 
