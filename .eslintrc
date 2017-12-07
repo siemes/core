@@ -1,0 +1,31 @@
+{
+    "extends": "airbnb",
+    "env": {
+        "node": true,
+        "mocha": true
+    },
+    "rules": {
+        "extends": "airbnb",
+        "env": {
+            "node": true,
+            "mocha": true
+        },
+        "rules": {
+            "no-param-reassign": 1,
+            "no-confusing-arrow": 0,
+            "import/no-unresolved": 0,
+            "import/no-extraneous-dependencies": 0,
+            "func-names": 0,
+            "comma-dangle": ["error", {
+                "arrays": "always-multiline",
+                "objects": "always-multiline",
+                "imports": "never",
+                "exports": "never",
+                "functions": "ignore"
+            }],
+            "jsx-a11y/href-no-hash": "off",
+            "no-underscore-dangle": 0,
+            "prefer-arrow-callback": 0
+        }
+    }
+}

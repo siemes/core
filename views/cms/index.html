@@ -1,0 +1,21 @@
+{% extends admin.path+'/index.html' %}
+
+{% block head %}
+  {{ super() }}
+  <link rel="stylesheet" type="text/css" href="/dist/cms.css?v={{ admin.version }}" />
+  <script type="text/javascript" src="/dist/cms.js?v={{ admin.version }}"></script>
+{% endblock %}
+
+{% block navbar %}
+<ul class="nav navbar-nav navbar-right">
+  {% for l in config.i18n.locales %}
+    <li class="locale-menu {% if l == locale %}active{% endif %}"><a href="/{{ admin.baseUrl }}/locale/{{ l }}">{{ l | upper }}</a></li>
+  {% endfor %}
+
+  <li>
+    <a href="/admin/logout"><i class="fal fa-sign-out min-w1 w-auto"></i>
+      {% block logout %}{{ __('admin.header.logout') }}{% endblock %}
+    </a>
+  </li>
+</ul>
+{% endblock %}

@@ -1,0 +1,113 @@
+{% extends 'admin/object/index.html' %}
+
+{% block navbarHeader %}
+<a class="navbar-brand" href="javascript:void(0);" onclick="window.history.back();">
+  <i class="fal fa-arrow-alt-left min-w1 w-auto"></i>
+</a>
+{% endblock %}
+
+{% set formLang = req.query.lang or locale %}
+
+{% block content %}
+  <div class="content">
+    <div class="post-wrapper">
+      <div class="container-fluid">
+
+        <div class="Card interactive">
+          <div>
+            <div class="row item-header">
+              <div class="col-md-8">
+                <span class="Button primary size1 mr-1"> {{ (req.query.lang or config.i18n.defaultLocale) | upper }} </span>
+                {% if type === 'update' %}
+                  {{ __({ phrase: 'cms.menu.form.header.edit', locale: formLang}) }}
+                {% else %}
+                  {{ __({ phrase: 'cms.menu.form.header.new', locale: formLang}) }}
+                {% endif %}
+              </div>
+              <div class="col-md-4 ta-right">
+              </div>
+            </div>
+          </div>
+
+          {% set parentData = {parentId: null} %}
+
+          {% if req.query.parent %}
+            {% set parentData = {parentId: req.query.parent} %}
+          {% endif %}
+
+          {% if data.parentId %}
+            {% set parentData = {parentId: data.parentId} %}
+          {% endif %}
+
+          {% set formAction = '' %}
+          {% if type === 'update' %}
+            {% set formAction = objectId %}
+          {% else %}
+            {% set formAction = 'new' %}
+          {% endif %}
+
+
+          {% set formQs = [] %}
+          {% if parentData.parentId %}
+            {% set formQs = (formQs.push('parent='+parentData.parentId), formQs) %}
+          {% endif %}
+
+          {% if req.query.lang %}
+            {% set formQs = (formQs.push('lang='+req.query.lang), formQs) %}
+          {% endif %}
+
+          {% set nameData = {name: ''} %}
+          {% if activeDoc %}
+            {% set nameData = {name: activeDoc.get('nameIntl.'+req.query.lang) or activeDoc.get('nameIntl')} %}
+            {% set slugData = {slug: activeDoc.get('slugIntl.'+req.query.lang) or activeDoc.get('slugIntl')} %}
+          {% endif %}
+
+          <form
+            id="form-new-menu"
+            role="form"
+            action="/{{ admin.baseUrl }}/{{ object }}/{{ formAction }}?{{ formQs | join('&') }}"
+            method="POST"
+          >
+            <div class="row margin-0 pt-3 form-block">
+              <div class="col-md-6 bp1-brs-dashed brw-1 borderColor-smoke">
+                {% if parentData.parentId %}
+                  {% field {name: 'parentId', model: 'cmsMenu', ref: 'cmsMenu', qType: 'fullArrayTree', data: parentData, display: 'nameIntl'} %}{% endfield %}
+                {% endif %}
+
+                {% set nameHelp = '<span class="badge Label red"> '+__({ phrase: 'cms.form.required', locale: formLang})+' </span>' %}
+                {% field {name: 'name', data: nameData, model: 'cmsMenu', help: nameHelp} %}{% endfield %}
+                {# {% field {name: 'slug', data: slugData, model: 'cmsMenu'} %}{% endfield %} #}
+              </div>
+
+              <div class="col-md-6">
+                {% if parentData.parentId %}
+                  {% field {name: 'page', model: 'cmsMenu', ref: 'cmsPage', qType: 'fullArrayTree', display: 'titleIntl'} %}{% endfield %}
+                  {% field {name: 'externalUrl', model: 'cmsMenu'} %}{% endfield %}
+                {% endif %}
+              </div>
+            </div>
+
+            {% if parentData.parentId %}
+            <div class="row margin-0 pt-2">
+              <div class="col-md-6 form-checkbox">
+                {% field {name: 'display', model: 'cmsMenu'} %}{% endfield %}
+                {% field {name: 'active', model: 'cmsMenu'} %}{% endfield %}
+              </div>
+            </div>
+            {% endif %}
+
+            <input name="intl" id="f-intl" type="hidden" value="{{ req.query.lang }}" />
+            <input name="i18n" id="f-i18n" type="hidden" value="{{ req.query.lang or locale }}" />
+
+            <div class="row margin-0 pt-2 pb-2">
+              <div class="col-md-12">
+                <button class="Button positive" type="submit">{{ __({ phrase: 'cms.form.button.save', locale: formLang}) }}</button>
+                <a href="/{{ admin.baseUrl }}/{{ object }}" class="Button">{{ __({ phrase: 'cms.form.button.cancel', locale: formLang}) }}</a>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

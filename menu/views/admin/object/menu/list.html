@@ -1,0 +1,160 @@
+{% import "admin/macro/object.html" as objectMacro %}
+{% import "./macro/tree.html" as treeMacro %}
+
+{% extends 'admin/object/index.html' %}
+
+{% set queryLength = (req.query | length) %}
+
+{% block navbarHeader %}
+  {% if urlPath == '/menu' and queryLength == 0 %}
+    <a class="navbar-brand" href="/{{ admin.baseUrl }}/{{ object }}">
+      <i class="fal fa-list-alt min-w1 w-auto"></i>&nbsp;&nbsp;{{ __('cms.menu.list.header') }}
+    </a>
+  {% else %}
+    <a class="navbar-brand" href="javascript:void(0);" onclick="window.history.back();">
+      <i class="fal fa-arrow-alt-left min-w1 w-auto"></i>&nbsp;&nbsp;
+    </a>
+  {% endif %}
+{% endblock %}
+
+{% set activeLang = req.query.lang or locale %}
+
+{% block content %}
+
+  {% set pageView = 'list' %}
+  {% if req.query.view %}
+    {% set pageView = req.query.view %}
+  {% endif %}
+
+  {% set parentId = 'null' %}
+  {% if req.query.pr %}
+    {% set parentId = req.query.pr %}
+  {% endif %}
+
+  {% set pageQs = [] %}
+  {% if req.query.lang %}
+    {% set pageQs = (pageQs.push('lang='+req.query.lang), pageQs) %}
+  {% endif %}
+  {% if req.query.view %}
+    {% set pageQs = (pageQs.push('view='+req.query.view), pageQs) %}
+  {% endif %}
+  {% if req.query.pr %}
+    {% set pageQs = (pageQs.push('pr='+req.query.pr), pageQs) %}
+  {% endif %}
+  {% set pageQs = (pageQs.push('p='), pageQs) %}
+
+  <div class="content">
+    <div class="post-wrapper">
+      <div class="container-fluid">
+
+        <div class="Card interactive">
+          <div>
+            <div class="row item-header">
+              <div class="col-md-8 search-form-wrapper">
+                {% if req.query.view == 'tree' %}
+                  <a href="/{{ admin.baseUrl }}/{{ object }}{% if req.query.pr %}?pr={{ req.query.pr }}{% endif %}" class="Button size1 positive mr-1">
+                    <i class="fal fa-indent min-w1 w-auto"></i>
+                  </a>
+                {% else %}
+                  <a href="/{{ admin.baseUrl }}/{{ object }}?view=tree{% if req.query.pr %}&pr={{ req.query.pr }}{% endif %}" class="Button size1 mr-1">
+                    <i class="fal fa-indent min-w1 w-auto"></i>
+                  </a>
+                {% endif %}
+
+                /
+                {% if req.query.pr %}
+                  {% apiquery {name: 'parentData', model: 'cmsMenu', qType: 'one', supressQuerymen: true}, {_id: req.query.pr}, {} %}{% endapiquery %}
+                  {{ modelData.parentData.namePathIntl | replace('|', ' / ') }}
+                {% endif %}
+              </div>
+              <div class="col-md-4 ta-right">
+                <a href="/{{ admin.baseUrl }}/{{ object }}/new?{% if req.query.pr %}parent={{ req.query.pr }}&{% endif %}lang={{ config.i18n.defaultLocale }}" class="Button positive">
+                  <i class="fal fa-plus min-w1 w-auto"></i>&nbsp;{{ __('cms.menu.list.new.button') }}
+                </a>
+              </div>
+            </div>
+
+            <div class="row item-list-header">
+              {% if pageView == 'tree' %}
+                <div class="col-md-12">{{ __('cms.menu.list.table.tree') }}</div>
+              {% else %}
+                <div class="col-md-6">{{ __('cms.menu.list.table.name') }}</div>
+                <div class="col-md-6 ta-right"></div>
+              {% endif %}
+            </div>
+
+            <div class="">
+              {% if pageView == 'tree' %}
+                <div class="row padding-5">
+                  <div class="col-md-12">
+                    <div class="mb-2 color-gray500"><small>{{ __('cms.menu.list.warning') | safe }}</small></div>
+
+                    {% if req.query.pr %}
+                      {% apiquery {name: 'menuTree', model: 'cmsMenu', qType: 'arrayTree'}, {_id: req.query.pr, childSort: 'asc'}, {} %}{% endapiquery %}
+                    {% else %}
+                      {% apiquery {name: 'menuTree', model: 'cmsMenu', qType: 'fullArrayTree'}, {childSort: 'asc'}, {} %}{% endapiquery %}
+                    {% endif %}
+                    <div class="category-list" data-lang="{{ __({ phrase: 'cms.list', locale: activeLang}) | dump }}" data-locales="{{ config.i18n.locales | dump }}">
+                      {{ treeMacro.parse(modelData.menuTree, '/admin/menu') }}
+                    </div>
+                  </div>
+                </div>
+              {% else %}
+                {% paginate {}, {parent: parentId}, {limit: 20, page: (req.query.p or 1)} %}{% endpaginate %}
+                {# {% paginate {}, {}, {limit: 20} %}{% endpaginate %} #}
+
+                {% if modelData[object].docs.length %}
+                  {% for doc in modelData[object].docs %}
+                    <div class="row item-list pt-2 pb-2" data-id="{{ doc.id }}">
+                      <div class="col-md-6">
+                        <div class="mb-1">
+                          <span class="Badge">{{ doc.get('namePathIntl.'+activeLang) | replace('|', ' / ') or doc.namePathIntl | replace('|', ' / ') }}</span>
+                        </div>
+                        <a class="" href="/{{ admin.baseUrl }}/{{ object }}?pr={{ doc.id }}">
+                          <span class="StatusIndicator size1 inline-block {% if doc.active %}positive{% endif %}"></span>
+                          {{ doc.get('nameIntl.'+activeLang) or doc.nameIntl }}
+                          {% if doc.display == false %}
+                            <i class="ml-1 color-gray400 fal fa-eye-slash min-w1 w-auto"></i>
+                          {% endif %}
+                        </a>
+                      </div>
+
+                      <div class="col-md-6 ta-right">
+                        {% for lang in config.i18n.locales %}
+                          {% set langCheck = doc.get('nameIntl.'+lang) %}
+                          <a href="/{{ admin.baseUrl }}/{{ object }}/{{ doc.id }}?lang={{ lang }}" class="Button {% if langCheck %}positive{% endif %} size1">
+                            {{ lang | upper }}
+                          </a>
+                        {% endfor %}
+                        <a href="/{{ admin.baseUrl }}/{{ object }}/new?parent={{ doc.id }}&lang={{ config.i18n.defaultLocale }}" class="Button size1">
+                          <i class="fal fa-plus min-w1 w-auto"></i>&nbsp;
+                          <i class="fal fa-list-alt min-w1 w-auto"></i>
+                        </a>
+                      </div>
+                    </div>
+                  {% endfor %}
+                {% else %}
+                  <div align="center" class="pl-5 pr-5 pb-6 pt-7">
+                    <div class="color-amber">
+                      <h2 class="Heading size2"><i class="fal fa-exclamation-triangle min-w1 w-auto"></i> {{ __('cms.menu.list.notfound') }}</h2>
+                    </div>
+                  </div>
+                {% endif %}
+              {% endif %}
+            </div>
+
+            <div class="row margin-0 pt-2 pb-2">
+              <div class="col-md-12">
+                {% if pageView == 'list' %}
+                  {% set pageBaseUrl = '/'+admin.baseUrl+'/'+object+'?'+(pageQs | join('&')) %}
+                  {{ objectMacro.paginate(modelData[object].pageObj, pageBaseUrl, modelData[object].pages) }}
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+{% endblock %}

@@ -1,0 +1,39 @@
+{
+  "name": "@siemes/core",
+  "description": "",
+  "version": "1.0.0",
+  "author": "Selçuk Fatih Sevinç",
+  "license": "MIT",
+  "engines": {
+    "node": ">=6.0.0"
+  },
+  "dependencies": {
+    "debug": "^2.6.3",
+    "underscore": "^1.8.3"
+  },
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "eslint": "^3.18.0",
+    "eslint-config-airbnb": "^14.1.0",
+    "eslint-plugin-import": "^2.2.0",
+    "eslint-plugin-jsx-a11y": "^4.0.0",
+    "eslint-plugin-react": "^6.10.3",
+    "mocha": "^3.2.0",
+    "supertest": "^3.0.0"
+  },
+  "main": "index.js",
+  "readmeFilename": "README.md",
+  "keywords": [
+  ],
+  "scripts": {
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/siemes/core.git"
+  },
+  "bugs": {
+    "url": "https://github.com/siemes/core/issues"
+  },
+  "homepage": "https://github.com/siemes/core"
+}

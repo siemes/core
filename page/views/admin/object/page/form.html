@@ -1,0 +1,107 @@
+{% import "admin/macro/object.html" as objectMacro %}
+
+{% extends 'admin/object/index.html' %}
+
+{% block navbarHeader %}
+<a class="navbar-brand" href="javascript:void(0);" onclick="window.history.back();">
+  <i class="fal fa-arrow-alt-left min-w1 w-auto"></i>
+</a>
+{% endblock %}
+
+{% set formLang = req.query.lang or locale %}
+
+{% block content %}
+  <div class="content">
+    <div class="post-wrapper">
+      <div class="container-fluid">
+
+        <div class="Card interactive">
+          <div>
+            <div class="row item-header">
+              <div class="col-md-8">
+                <span class="Button primary size1 mr-1"> {{ (req.query.lang or config.i18n.defaultLocale) | upper }} </span>
+                {% if type === 'update' %}
+                  {{ __({ phrase: 'cms.page.form.header.edit', locale: formLang}) }}
+                {% else %}
+                  {{ __({ phrase: 'cms.page.form.header.new', locale: formLang}) }}
+                {% endif %}
+              </div>
+              <div class="col-md-4"></div>
+            </div>
+          </div>
+
+          {% set parentData = {parentId: null} %}
+
+          {% if req.query.parent %}
+            {% set parentData = {parentId: req.query.parent} %}
+          {% endif %}
+
+          {% if data.parentId %}
+            {% set parentData = {parentId: data.parentId} %}
+          {% endif %}
+
+          {% set slugData = '' %}
+          {% if activeDoc %}
+            {% set titleData = {title: activeDoc.get('titleIntl.'+req.query.lang) or activeDoc.get('titleIntl')} %}
+            {% set excerptData = {excerpt: activeDoc.get('excerptIntl.'+req.query.lang) or activeDoc.get('excerptIntl')} %}
+            {% set contentData = {content: activeDoc.get('contentIntl.'+req.query.lang) or activeDoc.get('contentIntl')} %}
+            {% set slugData = activeDoc.get('slugIntl.'+req.query.lang) or activeDoc.get('slugIntl') %}
+          {% endif %}
+
+          {% set formAction = '' %}
+          {% if type === 'update' %}
+            {% set formAction = objectId %}
+          {% else %}
+            {% set formAction = 'new' %}
+          {% endif %}
+
+          {% set formQs = [] %}
+          {% if req.query.lang %}
+            {% set formQs = (formQs.push('lang='+req.query.lang), formQs) %}
+          {% endif %}
+
+          <form
+            id="form-new-page"
+            role="form"
+            action="/{{ admin.baseUrl }}/{{ object }}/{{ formAction }}?{{ formQs | join('&') }}"
+            method="POST"
+          >
+            <div class="row margin-0 pt-3 form-block">
+              {% if parentData.parentId %}
+                <div class="col-md-12">
+                  {% field {name: 'parentId', model: 'cmsPage', ref: 'cmsPage', qType: 'fullArrayTree', data: parentData, display: 'titleIntl'} %}{% endfield %}
+                </div>
+              {% endif %}
+
+              <div class="col-md-6 bp1-brs-dashed brw-1 borderColor-smoke">
+                {% set titleHelp = '<span class="badge Label red"> '+__({ phrase: 'cms.form.required', locale: formLang})+' </span><span class="form-slug">'+slugData+'</span>' %}
+                {% field {name: 'title', data: titleData, model: 'cmsPage', help: titleHelp} %}{% endfield %}
+                {% field {name: 'status', model: 'cmsPage'} %}{% endfield %}
+                {% field {name: 'template', model: 'cmsPage', optData: pageTemplates } %}{% endfield %}
+              </div>
+              <div class="col-md-6">
+                {% field {name: 'excerpt', data: excerptData, model: 'cmsPage', class: 'post-excerpt'} %}{% endfield %}
+                {# {% field {name: 'postCategories', model: 'cmsPage', ref: 'cmsCategory', qType: 'fullArrayTree', display: 'nameIntl'} %}{% endfield %} #}
+              </div>
+            </div>
+
+            <div class="row margin-0 pt-3 pl-2 pr-2">
+              {% field {name: 'content', data: contentData, model: 'cmsPage', class: 'f-cms-editor'} %}{% endfield %}
+            </div>
+
+            <input name="intl" id="f-intl" type="hidden" value="{{ req.query.lang }}" />
+            <input name="i18n" id="f-i18n" type="hidden" value="{{ req.query.lang or locale }}" />
+
+            <div class="row margin-0 pt-2 pb-2">
+              <div class="col-md-12">
+                <button class="Button positive" type="submit">{{ __({ phrase: 'cms.form.button.save', locale: formLang}) }}</button>
+                <a href="/{{ admin.baseUrl }}/{{ object }}" class="Button">{{ __({ phrase: 'cms.form.button.cancel', locale: formLang}) }}</a>
+              </div>
+            </div>
+          </form>
+        </div>
+
+      </div>
+    </div>
+  </div>
+{% endblock %}

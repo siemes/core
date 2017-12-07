@@ -1,0 +1,80 @@
+{% import "admin/macro/object.html" as objectMacro %}
+
+{% extends 'admin/object/index.html' %}
+
+{% block navbarHeader %}
+  <a class="navbar-brand" href="javascript:void(0);" onclick="window.history.back();">
+    <i class="fal fa-arrow-alt-left min-w1 w-auto"></i>
+  </a>
+{% endblock %}
+
+{% set formLang = req.query.lang or locale %}
+
+{% block content %}
+  <div class="content">
+    <div class="post-wrapper">
+      <div class="container-fluid">
+
+        <div class="Card interactive">
+          <div>
+            <div class="row item-header">
+              <div class="col-md-8">
+                <span class="Button primary size1 mr-1"> {{ (req.query.lang or config.i18n.defaultLocale) | upper }} </span>
+                {% if type === 'update' %}
+                  {{ __({ phrase: 'cms.info.form.header.edit', locale: formLang}) }}
+                {% else %}
+                  {{ __({ phrase: 'cms.info.form.header.new', locale: formLang}) }}
+                {% endif %}
+              </div>
+              <div class="col-md-4"></div>
+            </div>
+          </div>
+
+          {% if activeDoc %}
+            {% set valueData = {value: activeDoc.get('valueIntl.'+req.query.lang) or activeDoc.get('valueIntl')} %}
+          {% endif %}
+
+          {% set formAction = '' %}
+          {% if type === 'update' %}
+            {% set formAction = objectId %}
+          {% else %}
+            {% set formAction = 'new' %}
+          {% endif %}
+
+          {% set formQs = [] %}
+          {% if req.query.lang %}
+            {% set formQs = (formQs.push('lang='+req.query.lang), formQs) %}
+          {% endif %}
+
+          <form
+            id="form-new-info"
+            role="form"
+            action="/{{ admin.baseUrl }}/{{ object }}/{{ formAction }}?{{ formQs | join('&') }}"
+            method="POST"
+          >
+            <div class="row margin-0 pt-3 form-block">
+              <div class="col-md-4 bp1-brs-dashed brw-1 borderColor-smoke" style="min-height: 90px;">
+                {{ data.key }}
+              </div>
+              <div class="col-md-8">
+                {% set valueHelp = '<span class="badge Label red"> '+__({ phrase: 'cms.form.required', locale: formLang})+' </span>' %}
+                {% field {name: 'value', data: valueData, model: 'cmsInfo', help: valueHelp} %}{% endfield %}
+              </div>
+            </div>
+
+            <input name="intl" id="f-intl" type="hidden" value="{{ req.query.lang }}" />
+            <input name="i18n" id="f-i18n" type="hidden" value="{{ req.query.lang or locale }}" />
+
+            <div class="row margin-0 pt-2 pb-2">
+              <div class="col-md-12">
+                <button class="Button positive" type="submit">{{ __({ phrase: 'cms.form.button.save', locale: formLang}) }}</button>
+                <a href="/{{ admin.baseUrl }}/{{ object }}" class="Button">{{ __({ phrase: 'cms.form.button.cancel', locale: formLang}) }}</a>
+              </div>
+            </div>
+          </form>
+        </div>
+
+      </div>
+    </div>
+  </div>
+{% endblock %}

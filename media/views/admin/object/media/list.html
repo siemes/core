@@ -1,0 +1,170 @@
+{% import "admin/macro/object.html" as objectMacro %}
+
+{% extends 'admin/object/media/index.html' %}
+
+{% set queryLength = (req.query | length) %}
+
+{% block navbarHeader %}
+  {% if urlPath == '/media' and queryLength == 0 %}
+    <a class="navbar-brand" href="/{{ admin.baseUrl }}/{{ object }}">
+      <i class="fal fa-folder min-w1 w-auto"></i>&nbsp;&nbsp;{{ __('cms.media.list.header') }}
+    </a>
+  {% else %}
+    <a class="navbar-brand" href="javascript:void(0);" onclick="window.history.back();">
+      <i class="fal fa-arrow-alt-left min-w1 w-auto"></i>&nbsp;&nbsp;
+    </a>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+  {% set parentId = 'null' %}
+
+  {% if req.query.pr %}
+    {% set parentId = req.query.pr %}
+  {% endif %}
+
+  {% paginate {}, {parent: parentId, itemType: 'file'}, {limit: 20, sort: '_id', page: (req.query.p or 1)} %}{% endpaginate %}
+  {# {% paginate {}, {}, {limit: 20} %}{% endpaginate %} #}
+
+  {% set fieldLen = (req.query.field | length) %}
+  <script>
+    var selectFile = function(field, doc, size) {
+      if(!field || field === '') return false;
+      var parseDoc = JSON.parse(doc);
+      var getSize = (!size || size === 'full') ? '' : size+'/';
+      var url = window.location.origin+'/_i/'+getSize+parseDoc.fullPath;
+      window.parent.document.getElementById(field).value = url;
+      window.parent.tinymce.activeEditor.windowManager.close(window);
+    }
+  </script>
+
+  {% set pageQs = [] %}
+  {% if req.query.pr %}
+    {% set pageQs = (pageQs.push('pr='+req.query.pr), pageQs) %}
+  {% endif %}
+  {% if req.query.windowType %}
+    {% set pageQs = (pageQs.push('windowType='+req.query.windowType), pageQs) %}
+  {% endif %}
+  {% if req.query.field %}
+    {% set pageQs = (pageQs.push('field='+req.query.field), pageQs) %}
+  {% endif %}
+  {% set pageQs = (pageQs.push('p='), pageQs) %}
+
+  <div class="content">
+    <div class="post-wrapper">
+      <div class="container-fluid">
+
+        <div class="Card interactive">
+          <div>
+            <div class="row item-header">
+              <div class="col-md-8 search-form-wrapper">
+                /
+                {% if req.query.pr %}
+                  {% apiquery {name: 'parentData', model: 'cmsMedia', qType: 'one', supressQuerymen: true}, {_id: req.query.pr}, {} %}{% endapiquery %}
+                  {{ modelData.parentData.titlePathIntl | replace('|', ' / ') }}
+                {% endif %}
+              </div>
+              <div class="col-md-4 ta-right">
+                {% if req.query.pr %}
+                <a href="/{{ admin.baseUrl }}/{{ object }}/{{ req.query.pr }}" class="Button positive">
+                  {{ __('cms.media.list.edit.button') }}
+                </a>
+                {% endif %}
+
+                <a href="/{{ admin.baseUrl }}/{{ object }}/new{% if req.query.pr %}?parent={{ req.query.pr }}{% endif %}" class="Button positive">
+                  <i class="fal fa-plus min-w1 w-auto"></i>&nbsp;{{ __('cms.media.list.new.button') }}
+                </a>
+              </div>
+            </div>
+
+            <div id="fine-uploader" data-parent="{{ parentId }}" class="fine-uploader-wrap padding-2"></div>
+
+            <div class="row pl-2 pr-2">
+              <div class="col-md-4">
+                {% apiquery {name: 'folderData', model: 'cmsMedia', supressQuerymen: true}, {parent: parentId, itemType: 'folder'}, {limit: 100} %}{% endapiquery %}
+
+                {% for doc in modelData.folderData %}
+                  {% if doc.itemType == 'folder' %}
+                  <div class="folder-item" data-folder="{{ doc.id }}">
+                    <a class="editable" href="/{{ admin.baseUrl }}/{{ object }}?pr={{ doc.id }}&windowType={{ req.query.windowType }}&field={{ req.query.field }}">
+                      <i class="color-gray400 fal fa-folder min-w1 w-auto"></i>
+                      {{ doc.titleIntl | truncate(50, true) }}
+                    </a>
+                  </div>
+                  {% endif %}
+                {% endfor %}
+                <a href="/{{ admin.baseUrl }}/{{ object }}/new{% if req.query.pr %}?parent={{ req.query.pr }}{% endif %}" class="Button positive size1 mt-1">
+                  <i class="fal fa-plus min-w1 w-auto"></i>&nbsp;{{ __('cms.media.list.new.button') }}
+                </a>
+              </div>
+              <div class="col-md-8 media-list">
+                {% if modelData[object].docs.length %}
+                  {% for doc in modelData[object].docs %}
+                    {% if doc.itemType != 'folder' %}
+                      <div class="media-item clearfix">
+                          {% if doc.mime and doc.mime.includes('image') %}
+                          <a class="media-link" href="/_i/{{ doc.fullPath }}" target="_blank">
+                            <img src="/_i/h60-w80-cfill/{{ doc.fullPath }}" />
+                          </a>
+                        {% elseif doc.mime and doc.mime.includes('video') %}
+                          <a class="file-link" href="/{{ doc.fullPath }}" target="_blank">
+                            <i class="color-gray300 fal fa-file-video min-w1 w-auto"></i>
+                          </a>
+                        {% elseif doc.mime and doc.mime.includes('audio') %}
+                          <a class="file-link" href="/{{ doc.fullPath }}" target="_blank">
+                            <i class="color-gray300 fal fa-file-audio min-w1 w-auto"></i>
+                          </a>
+                        {% elseif doc.mime and doc.mime.includes('text') %}
+                          <a class="file-link" href="/{{ doc.fullPath }}" target="_blank">
+                            <i class="color-gray300 fal fa-file-alt min-w1 w-auto"></i>
+                          </a>
+                        {% else %}
+                          <a class="file-link" href="/{{ doc.fullPath }}" target="_blank">
+                            <i class="color-gray300 fal fa-file min-w1 w-auto"></i>
+                          </a>
+                        {% endif %}
+
+                        <div class="file-info">
+                          <a href="javascript:void(0);" onclick="selectFile('{{ req.query.field }}', '{{ doc | dump }}', 'full');">
+                            {{ doc.titleIntl | truncate(50, true) }}<br>
+                            <small>{{ doc.humanSize }}</small>
+                          </a>
+                          {% if doc.mime and doc.mime.includes('image') and fieldLen and config.resize.named %}
+                            <br />
+                            <div class="inline-block">
+                              <select style="" onchange="selectFile('{{ req.query.field }}', '{{ doc | dump }}', this.value)">
+                                <option>- {{ __('cms.media.list.editor.choose') }} -</option>
+                                <option value="">{{ __('cms.media.list.editor.original') }}</option>
+                                {% for k, named in config.resize.named %}
+                                  <option>{{ k }}</option>
+                                {% endfor %}
+                              </select>
+                            </div>
+                          {% endif %}
+                        </div>
+                      </div>
+                    {% endif %}
+                  {% endfor %}
+                {% else %}
+                  <div class="color-amber mt-1">
+                    <h2 class="Heading size1"><i class="fal fa-exclamation-triangle min-w1 w-auto"></i> {{ __('cms.media.list.notfound') }}</h2>
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="row margin-0 pt-2 pb-2">
+              <div class="col-md-12">
+                {% set pageBaseUrl = '/'+admin.baseUrl+'/'+object+'?'+(pageQs | join('&')) %}
+                {{ objectMacro.paginate(modelData[object].pageObj, pageBaseUrl, modelData[object].pages) }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  {{ super() }} {# --- fine-uploader template geliyor --- #}
+{% endblock %}
