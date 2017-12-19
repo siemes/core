@@ -23,7 +23,7 @@ module.exports = (app) => {
 
   // dynamic params --------------------------
 
-  const { defaultLocale } = cmsConf;
+  const { defaultLocale, forceLang = false } = cmsConf;
   const langParam = `/:lang(${cmsConf.locales.join('|')})`;
 
   const paths = {
@@ -92,7 +92,7 @@ module.exports = (app) => {
 
     app.use(handlePath(paths, pathsObj));
     app.use(handleParams(paramsList));
-    handleRoute(app, defaultLocale);
+    handleRoute(app, defaultLocale, forceLang);
   };
 
   return {

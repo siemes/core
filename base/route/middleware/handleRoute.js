@@ -1,5 +1,12 @@
-module.exports = (app, defaultLocale) => {
+module.exports = (app, defaultLocale, forceLang) => {
   app.get('*', (req, res, next) => {
+    if(req.path === '/' && forceLang) {
+      const reqLang = req.locale || defaultLocale;
+      return res.redirect(`/${reqLang}`);
+    }
+
+    return next();
+  }, (req, res, next) => {
     const { page, contentSlug } = req.paramsData;
     const { value = {} } = req.handlePath;
     let routeData = {};
