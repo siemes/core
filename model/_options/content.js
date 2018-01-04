@@ -33,6 +33,11 @@ module.exports = () => (
         { childOpts: { sort: { _w: (value === 'asc' ? 1 : -1) } } }
       ));
 
+      q.param('kind', null, { multiple: true }).option('kindParser', 'prop');
+      q.parser('kindParser', (prop, value) => (
+        { kind: { $in: (typeof value === 'string') ? [value] : value } }
+      ));
+
       return q;
     },
 
